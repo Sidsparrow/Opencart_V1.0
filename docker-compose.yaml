@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  selenium-hub:
+    image: selenium/hub:latest  # Replace with the latest version if available
+    container_name: selenium-hub
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"  # Expose port 4444 for the Selenium Hub
+    networks:
+      - grid
+    environment:
+      - SE_GRID_MAX_SESSION=5
+      - SE_GRID_BROWSER_TIMEOUT=60
+      - SE_GRID_SESSION_TIMEOUT=300
+
+  chrome-node:
+    image: selenium/node-chrome:latest  # Replace with the latest version if available
+    container_name: chrome-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    networks:
+      - grid
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Map host.docker.internal to host IP
+
+  firefox-node:
+    image: selenium/node-firefox:latest
+    container_name: firefox-node
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    networks:
+      - grid
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Map host.docker.internal to host IP
+
+networks:
+  grid:
+    driver: bridge
+

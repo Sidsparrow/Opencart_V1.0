@@ -1,0 +1,591 @@
+How to Hybrid Automation Framework 
+-----------------------------------------------
+A.
+1.Create Base page under "PageObject" which includes only constructor . this will invoke by every PageObject class constrcutor 
+1.2 Create Page objects class for "Home Page" , "Registration Page" , under pagepbject pakage (These classes extends from Baseclass)
+1.3 Create "Account Registration" Test under "Test Cases"
+1.4 Create "BaseClass" under testBases package and copy resuable methods 
+1.5 Create re-usable methods to generate random numbers and strngs in Baseclass
+-----------------------------------------------
+
+
+
+
+
+
+We have two type of log 
+1. Application log 
+2. Automation 
+
+Applicatiom log - 
+//What does logging means - use to track the information whciever user doing event , action , maintain the log file in the backend 
+every sec log file is generate , security mechanism hai basically 
+
+
+
+
+Automation log - ab kya hai ki hm kudh hi log file geenrate karenge 
+Different log levels 
+ALL < Trace < Debug < Info < Warn < Error < Fatal < Off
+
+these are log level we need to set in configuration file 
+if it is set to "Debug" then we get debug , infor , warn , error , Fatal
+
+Other than that we need to understand what are the "Appenders" and "Loggers"
+
+APPENDERS - is bascially describe where excatly we want to generate the log file 
+
+we can geenrate log in the form og file or we can generate the log messages inside the console so when i run the test 
+we always prefer to geenrate logs in file as we have to share it with developer 
+
+
+Now who will decide where you want to generate the logs either console or file appenders
+answer is "APPENDERS"
+
+
+LOOGERS - it will decided what type/level of logs we have to generate 
+-----------------------------------------------
+//Steps to geenrate logs 
+
+B. Addings logs to Test cases (log4j2)
+2.1 Add log4j2.xml file under src/test/resources
+2.2	Update Baseclass
+2.3 Add log statements to "AccountRegistrationTest"
+-----------------------------------------------
+Base Class mai ye import krna hota hai 
+import org.apache.logging.log4j.LogManager; //log4j
+import org.apache.logging.log4j.Logger;    
+
+-----------------------------------------------
+Now----
+C.RUN THE TEST ON DESIRED BROWSER/CROSS BROWSER/PARALLEL
+1.1 Create testng.xml to run test cases and paramaetrize browser name and OS to "Base Class" --> setup() method 
+1.2 Update BaseCLass --> setup() method , launch browser on conditions 
+1.3 Maintain separate xml to run test multiple browser parallelly by adding parameter in xml fie 
+
+-----------------------------------------------
+
+D.Read COmmon values from config.properties file 
+1.1 Add config.properties file under src/test/resource
+1.2 Update BaseClass --> setup() method , add script to load config.properties file 
+1.3 Replace hard coded values in Test Cases like url , username , password etc .
+why this ? if any application requires common data like , url , 
+-----------------------------------------------
+
+E.DATA DRIVEN Login test 
+1.1 Perpare the test data in excel , the excel file is inside the testdata folder 
+1.2 Create Excelutility Class under utilities package
+1.3 Update under Page object class MYAccountPage  add logout link element .
+1.4 Create "Data provideres" class in utilities packages to maintain data providers for data driven test cases 
+1.5 Create LoginDataDrivenTest under testCases packages 
+1.6 Add Entry in master xml file 
+-----------------------------------------------
+
+
+//Now abhi tk hm data provider use krte hai data driven testing ke liye 
+Data Provider TestNG mein ek feature hai jo tumhe multiple data sets ke saath ek hi test case run karne mein madad karta hai. Ye test automation mein data-driven testing implement karne ka asaan tareeka hai.
+Data provider ko dat jo hai vo na key value ke form mai chayee , but hmare pass hai excel mai 
+
+toh hame ek alag se code krke rakhna hoga jisme hm DATA PROVIDER ka jo kya karega ki excel ka 
+data hame array mai rakhna hai mtlb hame convert krna hoga.. ki excel ka data fetch karo 
+aur usko save krlo 2d array mai..
+mtlb isme method bnaege jo 2d array return karega 
+
+Aur is "DataProvider" class  ko hm use karenge apne test class ke method mai 
+@dataprovider="DataProvider" , ye itna ho jata bt hmara Dataprovider class test class mai ni hai 
+hence java ko hame data provider ka locartion btana padega 
+@Test(dataProvider="loginData", dataProviderClass = Dataproviders.class) //dataproviderclass ka use hi btane ke liye hai 
+ki meri "Dtaproviders.java" hai
+
+-----------------------------------------------
+F.GROUPING TEST
+1.1 Add all test in a specific groups (sanity , regression , master etc )
+1.2 Also add Base Class methods in setup() and teardown() to all groups 
+1.3 Create separate Testng xml file(grouping.xml) to run groups and include groups which we want to execute
+
+-----------------------------------------------
+
+G. ADD EXTENT REPORTS to PROJECTS
+1.1 Create ExtentReportUtility utility class under utilities package 
+1.2 Add captureScreen() method in Baseclass
+1.3 Add ExtentReportUtility entry in testing.xml file 
+1.4 Make sure Webdriver is static in BASECLASS . we  refer same driver instance in ExtenrReportUtility
+
+-----------------------------------------------
+
+
+IMportant note 
+///////////////////////////////
+
+Bilkul! Tumhare code ka issue yeh hai ki tum onTestFailure method ke andar new Base_Class() ka use kar rahe ho, jo naya object banata hai. 
+Uske saath ek naya driver instance bhi banega, jo problem create kar sakta hai.
+
+Base_Class ka driver:
+
+Tumne Base_Class me ek instance variable driver declare kiya hai:
+public WebDriver driver;
+setup method ke andar, tum driver ko initialize karte ho (ChromeDriver, FirefoxDriver, etc.) based on browser parameter.
+onTestFailure me issue:
+
+Jab tum new Base_Class() ka use karte ho:
+
+String imagepath = new Base_Class().captureScreen(result.getName());
+Yeh line ek naya Base_Class object banayegi, jisme ek fresh driver hoga jo null hai, kyunki tum setup method ko call nahi kar rahe ho.
+Is wajah se captureScreen method ke andar:
+
+TakesScreenshot ts = (TakesScreenshot) driver;
+yeh line NullPointerException throw karegi, kyunki driver null hoga.
+Solution:
+Tumhe driver ka existing instance use karna chahiye jo setup method me initialize hota hai. Iske liye:
+
+onTestFailure method me existing driver use karo:
+
+Tumhe captureScreen method ko directly call karna hai existing object se, jo test execution ke time already initialized hai.
+Correct code:
+
+String imagepath = ((Base_Class) result.getInstance()).captureScreen(result.getName());
+result.getInstance() tumhare test class ka existing instance deta hai.
+Base_Class me typecast karne ke baad, tum captureScreen method ko call karte ho, jo existing driver ka use karega.
+
+
+Improved Explanation (Tumhari Language Me):
+Jab tum new Base_Class() karte ho, toh ek alag object ban jata hai, jo tumhare @BeforeClass ke driver se connected nahi hai.
+driver null hone ki wajah se NullPointerException aayega jab captureScreen method chalega.
+result.getInstance() tumhare current running test ka actual object deta hai, jisme driver already set hota hai.
+
+//////////////////////
+Problem 
+ye tha ki onTestFailure method mein new Base_Class() call karne se naya object create ho raha tha,
+jiske wajah se WebDriver ka multiple instances create hone ka risk tha. Isse browser session duplicate ho sakta tha aur unpredictable behavior (jaise galat screenshots) 
+ka samna karna padta.
+
+Solution
+ke taur par WebDriver ko static declare kiya gaya, jisse ab driver ek shared instance ke roop mein poore class ke liye accessible hai. 
+Static driver use karne se ek hi browser session rahega, aur sabhi methods aur objects usi instance ko refer karenge.
+Is approach ke sath ensure karna zaroori hai ki test execution ke end par driver.quit() call karke resources release kiye jayein, aur agar parallel testing ho,
+toh ThreadLocal ka use karke conflicts avoid karein.
+
+
+----------------------------------------------
+
+H. RUN TEST ON SELENIUM GRID
+--SETUP--
+# Download slenium-server-4.15.0.jar and place it somewhere 
+# Run below the command in terminal to start selenium grid -- > java-jar selenium-server-4.15.0.jar standalone 
+# Url to see seesion http://localhost:4444/
+
+1.1 Add execution_env =local/remote in config.properties file under resources folder .
+1.2 update "setup()" method in "BASE CLASS" (capture execution environment from config.properties file then add 
+add required capabilites of OS and Browser in conditions )
+
+
+-----------------------------------------------
+//SELENIUM GRID 
+
+Selenium Grid kya hai?
+Selenium Grid ek tool hai jo tumhe ek hi test suite ko" multiple machines" aur "different browsers" par "parallel" run karne ki facility deta hai.
+ Ye distributed testing ke liye design kiya gaya hai, jisme tumhare tests ek hi time par alag-alag configurations me chal sakte hain.
+
+
+//
+Selenium Grid kyun use karna chahiye?
+1. Parallel Execution:
+Ek hi test case ko ek saath multiple browsers (Chrome, Firefox, Edge) aur devices (Windows, macOS, Linux) par test karna.
+Time kaafi save hota hai jab parallel execution hoti hai.
+2. Cross-Browser Testing:
+Ensure karna ki tumhara application sabhi browsers aur operating systems me sahi kaam kar raha hai.
+Example: Chrome, Safari, Firefox, Edge.
+3. Resource Optimization:
+Selenium Grid tumhare tests ko distribute kar ke execute karta hai, jo tumhare local system ke resources ko free rakhta hai.
+Ek centralized Hub par multiple machines (Nodes) connect karke tum zyada efficient testing kar sakte ho.
+
+//
+Selenium Grid ki need kyu hui?
+Without Selenium Grid:
+Single Environment Testing:
+
+Tumhare tests ek baar me sirf ek browser aur ek machine par chal sakte hain, jo kaafi time-consuming hota hai.
+No Parallel Execution:
+
+Agar tumhare paas 500 tests hain aur har test ko 1 minute lagta hai, toh tests complete hone me 500 minutes lagenge.
+Scalability Issues:
+
+Manual switching between devices, operating systems, aur browsers kaafi tedious ho jata hai.
+
+Selenium Grid kaise kaam karta hai?
+Selenium Grid ka architecture Hub-Node model par based hai:
+
+Hub:
+
+Central server hai jo tumhare tests ko coordinate karta hai.
+Tumhare tests ko Nodes par forward karta hai based on capabilities.
+Node:
+
+Actual machine ya browser hai jaha tumhare tests run hote hain.
+Node ek physical machine, virtual machine, ya Docker container ho sakti hai.
+
+
+///////////////
+Selenium Grid: Hub aur Node ka Simple Explanation
+Selenium Grid ek Hub-Node Architecture par kaam karta hai. Ye architecture distributed testing ko enable karta hai, jahan Hub aur Nodes ek saath kaam karte hain. Samajhne ke liye isse ek teacher (Hub) aur students (Nodes) ke example ki tarah socho:
+
+1. Hub: Teacher ki tarah
+Hub ek central controller hai, jo testing ke instructions (test cases) Nodes ko deta hai.
+Tumhare Selenium tests Hub ke saath interact karte hain.
+Hub decide karta hai ki kaunsa Node tumhare test ke liye best match karega (e.g., browser type, OS).
+Example:
+
+Hub ke paas test cases aaye: "Google open karo Chrome browser me."
+Hub check karega ki kaunsa Node ke paas Chrome browser hai aur waha test bhej dega.
+Hub Features:
+Centralized Control: Hub sabhi Nodes ko manage karta hai.
+Load Balancing: Hub incoming tests ko alag-alag Nodes me distribute karta hai.
+2. Node: Students ki tarah
+Node woh machines hain jahan tumhare actual test cases run hote hain.
+Har Node ek specific environment ko represent karta hai (e.g., Chrome browser on Windows, Firefox on Linux).
+Multiple Nodes ek hi Hub se connect ho sakte hain.
+Example:
+
+Node ek machine hai jo Windows 10 aur Chrome 90 browser run kar raha hai.
+Hub is Node ko select karega agar tumhare test me Windows aur Chrome ki requirement hai.
+Node Features:
+Environment Representation: Har Node ek OS aur browser ka combination represent karta hai.
+Multiple Nodes: Ek Hub se multiple Nodes connect ho sakte hain.
+Hub aur Node ka Relationship
+Hub ek command center hai, aur Nodes workers hain jo kaam (tests) complete karte hain.
+Hub Nodes ke status check karta hai (idle ya busy) aur kaam assign karta hai.
+Practical Example: Testing Setup
+Test Case:
+Tumhare paas ek test case hai jo Chrome browser me Google ko open karta hai.
+
+Hub Setup:
+
+bash
+java -jar selenium-server-<version>.jar hub
+Hub ab listening mode me hai aur Nodes ke connection ke liye ready hai.
+Hub URL: http://localhost:4444/wd/hub
+Node Setup: Node ko Hub ke saath connect karo:
+
+bash
+java -jar selenium-server-<version>.jar node --hub http://localhost:4444
+Ye Node Chrome browser aur Windows 10 environment ko represent karega.
+Test Execution: Tumhara Selenium test RemoteWebDriver use karega aur Hub se connect karega:
+
+java
+DesiredCapabilities capabilities = new DesiredCapabilities();
+capabilities.setBrowserName("chrome");
+
+WebDriver driver = new RemoteWebDriver(new URL("http://localhost:4444/wd/hub"), capabilities);
+driver.get("https://www.google.com");
+Flow:
+
+Test case Hub ko request bhejta hai: "Chrome me Google kholna hai."
+Hub decide karta hai ki kaunsa Node (Chrome wala) test execute karega.
+Node test ko execute karta hai aur result Hub ko bhejta hai.
+Why Use Hub and Node Architecture?
+Distributed Testing: Tum multiple machines par ek saath tests run kar sakte ho.
+
+Cross-Browser Testing: Different Nodes different browsers aur OS represent karte hain.
+
+Time Saving: Parallel execution se testing ka time kaafi reduce hota hai.
+
+Scalability: Tum easily naye Nodes add kar sakte ho jab testing ka load zyada ho.
+
+Summary
+Hub: Test cases ko Nodes par distribute karta hai. Ye ek server hai jo tests manage karta hai.
+Node: Actual machine/browser/OS hai jahan tests execute hote hain.
+Relationship: Hub Nodes ko manage karta hai aur kaam assign karta hai.
+Agar tumhe practical setup karne me koi doubt ho, toh batao! 😊
+
+
+
+//COnditon to setups Selenium Grid 
+Conditions to Use Selenium Grid:
+Hub aur Nodes ka Proper Configuration:
+
+1.Ek Hub aur kam se kam ek Node ka setup hona chahiye.
+A.Nodes ko Hub ke URL ke saath connect karna zaruri hai.
+B.Compatible Browsers aur Drivers:
+
+2.Tumhare Nodes par jo browsers hain, unke compatible WebDriver versions install hone chahiye.
+Example: Chrome ke liye chromedriver, Firefox ke liye geckodriver.
+Same Network ya Accessible Connection:
+
+3.Hub aur Nodes ek hi network ya VPN par hone chahiye ya ek dusre ko accessible ho.
+Java Installed:
+
+4.Selenium Grid ko run karne ke liye Java Runtime Environment (JRE) installed hona zaruri hai.
+Test Scripts me RemoteWebDriver Use:
+
+5.Tumhare test scripts me RemoteWebDriver ka use hona chahiye, jo Hub ke URL ko target kare.
+Node ke Resources Sahi Hona:
+
+6.Nodes par sufficient CPU, RAM, aur disk space hona chahiye, taki tests smoothly run ho.
+
+
+//////////////////
+1. Standalone Mode:
+Kya hota hai? Standalone mode ek simple setup hai jisme Hub aur Node ek hi machine par run hote hain. Tumhe alag se Hub aur Nodes configure karne ki zarurat nahi hoti.
+
+Kab use karte hain?
+
+Jab tumhari testing requirements chhoti hain.
+Ek hi machine par sab kuch test karna hai (single-node testing).
+Beginners ke liye yeh best hai.
+Setup kaise karein?
+
+Command:
+java -jar selenium-server-<version>.jar standalone
+Execution:
+Selenium Grid automatically Hub aur Node ko internally manage karega.
+Tum bas http://localhost:4444/wd/hub par connect karo.
+
+
+2. Hub-Node Mode:
+Kya hota hai? Hub-Node mode ek distributed architecture hai jisme:
+
+Hub ek centralized server hota hai jo tests ko manage karta hai.
+Nodes alag-alag machines (ya Docker containers) par run hote hain jaha actual tests execute hote hain.
+Kab use karte hain?
+
+Jab tumhare paas multiple machines, browsers, aur OS hain testing ke liye.
+Jab tumhe parallel execution aur cross-browser testing karni ho.
+Large-scale automation ke liye yeh ideal hai.
+Setup kaise karein?
+
+Hub Start karo:
+bash
+Copy code
+java -jar selenium-server-<version>.jar hub
+Node Start karo:
+bash
+Copy code
+java -jar selenium-server-<version>.jar node --hub http://localhost:4444
+//////
+
+
+//---------__DOCKER-------------------------//
+1. docker --version
+Docker ki current version ko check karne ke liye.
+
+2. docker info
+Docker system ke baare mein detailed information dikhata hai.
+
+3. docker pull <image_name>
+Docker Hub ya kisi aur registry se image ko download karta hai.
+
+4. docker build -t <image_name> <path>
+Dockerfile se image ko build karta hai. <path> folder ya directory ka path hota hai jahan Dockerfile hota hai.
+
+5. docker images
+Available Docker images ko list karta hai.
+
+6. docker ps
+Running containers ki list dikhata hai.
+
+7. docker ps -a
+Sabhi containers (running aur stopped) ki list dikhata hai.
+
+8. docker run <options> <image_name>
+Ek container start karta hai specific image se. Jaise:
+
+docker run -d <image_name> (detached mode mein)
+docker run -it <image_name> (interactive mode mein)
+9. docker exec -it <container_id> <command>
+Running container ke andar command run karta hai. Jaise docker exec -it <container_id> bash se container ke shell mein enter ho sakte hain.
+
+10. docker stop <container_id>
+Running container ko stop karta hai.
+
+11. docker start <container_id>
+Stopped container ko start karta hai.
+
+12. docker restart <container_id>
+Container ko restart karta hai.
+
+13. docker rm <container_id>
+Stopped container ko remove karta hai.
+
+14. docker rmi <image_name>
+Image ko remove karta hai.
+
+15. docker logs <container_id>
+Running ya stopped container ke logs ko show karta hai.
+
+16. docker network ls
+Available networks ki list dikhata hai.
+
+17. docker volume ls
+Available volumes ki list dikhata hai.
+
+18. docker prune
+Unused Docker resources ko clean karta hai:
+
+docker system prune — System ke unused resources ko remove karta hai.
+docker container prune — Stopped containers ko remove karta hai.
+docker image prune — Unused images ko remove karta hai.
+19. docker-compose up
+Docker Compose file ke through multiple containers ko start karta hai.
+
+20. docker-compose down
+Docker Compose ke through start kiye gaye containers ko stop aur remove karta hai.
+
+//----------DOCKER END----------------//
+
+To establish Selenium Grid Using Docker we need 3 images 
+1. hub
+2. As i have windows hence need windows - firefox  as node
+3. windows-chrome as node
+in images ka use krke hm container bnaege phir isme automation use karenge
+
+
+////--_STEPS TO SETUP DOCKER IMAGE NODE -------//
+1. CREATE DOCKER NETWORK
+			- docker network create grid  --> "grid basically is a name of a docker network as we know for grid we need to 
+			have same netwrok for hub and node "
+
+2. RUN HUB 
+		- docker run -d -p 4442-4444:4442-4444 --net ${grid} --name ${selenium} ${selenium/hub}  
+		${grid} - name of network
+		${selenium} - name of the container 
+		${selenium/hub} - name of the image
+		
+3. RUN NODE		
+		- docker run -d --net grid -e SE_EVENT_BUS_HOST=${selenium-hub} -e SE_EVENT_BUS_PUBLISH_PORT=4442 -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 ${selenium/node-chrome}
+			${selenium-hub} - hub container name 
+			${selenium/node-chrome} - node image name 
+			
+Add MANY NODE AS YOu Want
+Then just confirm by usiing 
+http://localhost:4444/ui/# --> you can see multiple platforms are added
+
+
+ab kya hai ye toh hai hr baar ek node dalne ki manual step agr isse automate krna hai toh 
+
+"docker-compose.yaml"
+
+ bnani hogi ab isme hota kya hai isme bs jo hum manually kr rahe hai uski 
+ek script bna denge 
+aur terminal mai jakr isko run krdenge using command 
+1.Go to path where you have stored that docker-compose.yaml file 
+2.Now Run Command  "docker-compose start" bs ye us file ke undr hub node sabko start krdega automatically
+3.Now docker hame bs ek node deta hai aur container mai usko increase krne ke ke liye use 
+
+"docker-console scale chrome = 3 (no of node you want)"
+
+
+4. To stop use "docker-compose stop"
+
+--------------------------------------------------------------------------------------
+
+-----------------------------------------------
+
+I.RUN TEST CASES USING MAVEN pom.xml , command prompt ,$ run.bat file
+/////DEPENDENCIES AND PLUGINS
+1. Dependencies
+Definition: Dependencies wo libraries ya external code hote hain jo aapke project ke code ko run karne ke liye chahiye hote hain.
+Purpose: Aapke project ke functionality ya features ke liye jarurat hoti hai.
+Scope: Dependencies runtime aur compile-time ke liye hoti hain.
+Example: Agar aapko Apache POI use karke Excel file manipulate karni hai, to aap Apache POI dependency add karte ho.
+Maven mein Example:
+xml
+Copy code
+<dependencies>
+    <dependency>
+        <groupId>org.apache.poi</groupId>
+        <artifactId>poi</artifactId>
+        <version>5.2.3</version>
+    </dependency>
+</dependencies>
+Jab Application chalega:
+Ye dependency .jar file ke saath project mein include hoti hai.
+Ye sirf aapke code ke liye hoti hai (e.g., classes/methods ka access).
+
+
+2. Plugins
+Definition: Plugins wo tools ya extensions hain jo Maven ke workflow ko automate karte hain.
+Purpose: Build, test, package, deploy, aur documentation process ko automate karna.
+Scope: Plugins sirf build-time aur execution-time pe kaam karte hain, code ke runtime pe nahi.
+Example: Agar aapko project build karna hai ya WAR file generate karni hai, to aap Maven plugin use karte ho.
+Maven mein Example:
+xml
+Copy code
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+            <configuration>
+                <source>11</source>
+                <target>11</target>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+Jab Application chalega:
+Ye plugin project ke process (build/test/package) ke liye kaam karte hain, application ke logic ke liye nahi.
+
+After these plugin we are not able to run our code using Pom.xml just right click and select TESTng Test
+
+///////////////
+NOW TO RUN OUR PROJECT FROM TERMINAL / COMMAND PROMPT 
+---------------------
+1.Need to install maven on OS level , to check mvn -v 
+2.Set the PATH after this 0-->  Maven home: /usr/share/maven (differ in different system)
+3.Now in Terminal Go to the path to your project 
+
+cd/home/user/eclipse/CodesBySId/Opencart_V1.0
+4.Use command "mvn test" or "mvn clean test"	
+
+Maven command mvn clean test me clean ka ek specific role hota hai. Iska matlab aur role kuch iss tarah se hai:
+
+clean ka matlab:
+clean phase Maven build lifecycle ka ek hissa hai.
+Jab mvn clean command chalai jaati hai, to yeh target directory ko delete kar deta hai. Yeh directory wo hai
+jisme Maven build outputs jaise compiled classes, JAR files, aur test reports store
+karta hai.
+
+ab tm chaho toh script bna lo hr har baar script hi run krna 
+us script mai- 
+cd /home/user/eclipse/CodesBySId/Opencart_V1.0
+mvn clean test
+
+Toh all in short karu toh 
+Pom.xml --> testng ke xml file ---> us xml file se Test Case --> Page Object model 
+															 --> Utilities 
+															 --> test data file 
+															 --> other config file
+
+"Now this Pom.xml can be execute from terminal , within eciplse or ide , and from JENKINS "
+-----------------------------------------------
+
+
+-----------------------------------------------
+J. Setup GIT and GITHUB
+
+Pre requisite -
+1.Install GIT 
+2.Create an account in Github
+
+////////////////WORKFLOW////////////////////////
+ROUND 1
+To create our local repositories
+
+1. Create new local repositories 	(one time) --> "git init"
+after this it will create a .git folder jo hidden hota hai 
+
+2.Provide user to git repositories 
+"git config --golbal user.name "yourname" "
+"git config --global user.email "youremail" "
+
+
+
+
+
+
+
+
+
+
+

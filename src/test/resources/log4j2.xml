@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<Configuration status="info">
+    <!-- Define custom properties -->
+    <Properties>
+        <Property name="logPattern">%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n%throwable%n</Property>  
+        <Property name="basePath">./logs</Property>
+    </Properties>
+
+    <!-- Define Appenders -->
+    <Appenders>
+        <!-- Console Appender 
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="${logPattern}" />
+        </Console> -->
+
+        <!-- File Appender
+        <File name="FileAppender" fileName="${basePath}/application.log" append="true">
+            <PatternLayout pattern="${logPattern}" />
+        </File> -->
+
+        <!-- Rolling File Appender with size-based rolling -->
+        <RollingFile name="RollingFileAppender" fileName="${basePath}/application.log"
+                     filePattern="${basePath}/application-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${logPattern}" />
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10000" />
+                <TimeBasedTriggeringPolicy />
+            </Policies>
+            <DefaultRolloverStrategy max="7" />
+        </RollingFile>
+    </Appenders>
+
+    <!-- Define Loggers -->
+    <Loggers>
+        <!-- Application Logger -->
+         <Logger name="com.example.yourapp" level="debug" additivity="false"> 
+          <!--   <AppenderRef ref="FileAppender"/> -->
+        <!--    <AppenderRef ref="ConsoleAppender"/> -->
+         </Logger> 
+
+        <!-- Root Logger -->
+        <Root level="info">
+          <!--  <AppenderRef ref="ConsoleAppender"/> --> 	
+            <AppenderRef ref="RollingFileAppender"/>
+        </Root>
+    </Loggers>
+</Configuration>
+
+<!--Now we need  to integrated log4j2 with our base class -->
