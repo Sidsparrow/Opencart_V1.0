@@ -580,8 +580,11 @@ after this it will create a .git folder jo hidden hota hai
 "git config --global user.email "youremail" "
 
 
+3.Adding file/folder to staging/indexing --> "git add -A" {A here is all file/folders} 
 
+4. Commit the code into local(git) repository --> " git commit -m "commit message" "
 
+5.
 
 
 
