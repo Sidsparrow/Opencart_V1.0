@@ -19,6 +19,7 @@ import org.openqa.selenium.Platform;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -34,7 +35,7 @@ public class Base_Class {
 	public static WebDriver driver;
 	public Logger logger; // implement log4j2
 	public Properties p;
-
+	public ChromeOptions options;
 	@BeforeClass(groups = { "master", "sanity", "regression" })
 	@Parameters({ "os", "browser" })
 	public void setup(String os, String br) throws Exception {
@@ -101,12 +102,20 @@ public class Base_Class {
 			// driver.get("http://localhost/opencart/upload/");
 			driver.get(p.getProperty("appUrlgrid")); // reading URL from config file
 		}
+		 if(p.getProperty("jenkinsbuild").equalsIgnoreCase("yes")) {
+		options = new ChromeOptions();
+		options.addArguments("--headless"); // Enable headless mode
+		options.addArguments("--disable-gpu"); // Disable GPU acceleration
+		options.addArguments("--no-sandbox"); // Required for certain Linux environments
+		options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
+		options.addArguments("--remote-allow-origins=*"); // Allow remote origins
+		 }
 
 		// for Local Environment
 		if (p.getProperty("execution_env").equalsIgnoreCase("local")) {
 			switch (br.toLowerCase()) {	
 			case "chrome":
-				driver = new ChromeDriver();
+				driver = p.getProperty("jenkinsbuild").equalsIgnoreCase("yes") ? new ChromeDriver(options) : new ChromeDriver();
 				break;
 			case "firefox":
 				driver = new FirefoxDriver();
@@ -125,12 +134,9 @@ public class Base_Class {
 			driver.get(p.getProperty("appUrl")); // reading URL from config file
 			
 		}
+		
 		driver.manage().deleteAllCookies();
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(7));
-
-		
-		
-		
 		driver.manage().window().maximize();
 
 	}

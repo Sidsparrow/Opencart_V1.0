@@ -569,7 +569,7 @@ Pre requisite -
 2.Create an account in Github
 
 ////////////////WORKFLOW////////////////////////
-ROUND 1
+----------ROUND 1-------
 To create our local repositories
 
 1. Create new local repositories 	(one time) --> "git init"
@@ -584,11 +584,180 @@ after this it will create a .git folder jo hidden hota hai
 
 4. Commit the code into local(git) repository --> " git commit -m "commit message" "
 
-5.
+5.Push it to remote directory ---> "git push -u origin master"
+
+
+Working Directory  -->  Staging Area  -->  Local Repository  -->  Remote Repository
+   (git add)             (git commit)         (git push)
+
+
+mkdir my-project
+cd my-project
+git init
+
+echo "Hello, Git!" > example.txt
+git status
+
+git add example.txt
+git status
+
+git commit -m "Added example.txt file"
+git status
+
+git remote add origin <REMOTE_URL>
+git push -u origin master
+
+
+//NOW AB Kuch dobara se krna hai toh hame saare steps repeat ni krne honge 
+hame origin set kr diya hai 
+bs kuch file add krna hoga staging mai 
+commit karo 
+push karo 
+
+----------ROUND 2---------
+1.git add -A
+2.git commit -m "commit statement"
+3.git push origin master 
+
+
+Pull All the files from Remote Repositories 
+---------------------------------------------
+git pull https://github.com/Sidsparrow/Opencart_V1.0.git
+
+
+Clone new Repositories to local system 
+--------------------------------------------
+git clone <repository-url> [directory]
+The URL of the remote Git repository you want to clone. This can be an HTTPS URL (e.g., https://github.com/user/repo.git), an SSH URL (e.g., git@github.com:user/repo.git), or a local repository path.
 
 
 
 
+--------NOW ITS TIME FOR CI/CD------------
+CI/CD stands for Continuous Integration and Continuous Deployment/Delivery. 
+It is a methodology in DevOps that automates the integration, testing, 
+and deployment of applications 
+to streamline development and operations.
 
 
+Jenkins in CI/CD
+Jenkins is an open-source automation server widely used
+for implementing CI/CD pipelines. It integrates with various tools, plugins,
+and environments to automate the entire development lifecycle.
+
+How Jenkins Works
+Trigger the Job:
+
+Events like a code commit, a scheduled time, or manual triggers can start the CI/CD pipeline.
+Fetch Code:
+
+Jenkins pulls the code from a repository (e.g., Git, GitHub, GitLab, Bitbucket).
+Build:
+
+Compiles the code using tools like Maven, Gradle, or Ant.
+Test:
+
+Runs automated tests (e.g., JUnit, Selenium) to verify the code.
+Package:
+
+Creates deployable artifacts like .war, .jar, or Docker images.
+Deploy:
+
+Pushes the code to a staging or production environment using deployment tools (e.g., Kubernetes, Docker, AWS, Ansible).
+Jenkinsfile
+A Jenkinsfile is a text file that defines the steps in a CI/CD pipeline. It uses a Groovy-based syntax.
+
+Example of a Simple Jenkinsfile:
+groovy
+Copy code
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/user/repo.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh './gradlew build'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh './gradlew test'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying application...'
+            }
+        }
+    }
+}
+
+********Steps tp install Jenkins**************
+/////////////////////////
+1. Download the Jenkins WAR File
+2.java -jar jenkins.war
+3.By default, Jenkins runs on port 8080. You can change the port using the
+ --httpPort option:
+4.Configure Jenkins as a Service
+To ensure Jenkins runs in the background and starts on boot, configure it as a systemd service:
+
+Create a Service File:
+
+A. sudo nano /etc/systemd/system/jenkins.service
+---
+Add the Following Configuration:
+
+Description=Jenkins Daemon
+After=network.target
+
+[Service]
+User=<your-user> # Replace with your username
+ExecStart=/usr/bin/java -jar /path/to/jenkins.war
+Restart=always
+WorkingDirectory=/home/<your-user>
+
+[Install]
+WantedBy=multi-user.target
+Replace /path/to/jenkins.war with the actual path to your .war file.
+
+B.Reload systemd and Start the Service:
+
+C.sudo systemctl daemon-reload
+D.sudo systemctl start jenkins
+sudo systemctl enable jenkins
+Check the Service Status:
+
+E.sudo systemctl status jenkins
+Access Jenkins Web Interface
+Open a web browser and go to:
+
+"""""""""""http://<your-server-ip>:8080""" --> JENKINS
+Unlock Jenkins:
+
+On the first startup, Jenkins generates a default admin password.
+View the password with:
+bash
+Copy code
+sudo cat ~/.jenkins/secrets/initialAdminPassword
+Enter this password to unlock Jenkins.
+Complete Setup:
+
+Install suggested plugins or customize your plugins.
+Create an admin user.
+Configure Jenkins for your use case.
+
+
+-----------------------------------------------
+How to map jenkins with out GIT and maven 
+-----------
+manage jenkins --> tools --> 
+setup path for JDK , Mvn , Git (one time only )
+
+1. Create a JOB --> add git repo --> save and apply 
+2.And run build 
 
